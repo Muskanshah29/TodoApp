@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, Button, StyleSheet, Alert, TouchableOpacity } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const LoginScreen = () => {
   const [username, setUsername] = useState('');
@@ -31,8 +32,12 @@ const LoginScreen = () => {
       if (response.ok) {
         const userId = data.user?._id; // Access the user ID
         if (userId) {
+
+          await AsyncStorage.setItem('@isLogIn','true')
+          await AsyncStorage.setItem('@userId',userId)
           Alert.alert('Success', `Welcome, ${username}!`);
-          navigation.navigate('todo', { userId }); // Pass the user ID to the next screen
+          navigation.navigate('todo'); // Pass the user ID to the next screen
+
         } else {
           throw new Error('User ID not found in response');
         }
@@ -111,3 +116,5 @@ const styles = StyleSheet.create({
 });
 
 export default LoginScreen;
+
+

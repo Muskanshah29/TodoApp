@@ -1,23 +1,30 @@
-import React, { useState,useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, TextInput, Button, StyleSheet, FlatList, TouchableOpacity, Alert } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons'; // Import vector icons
-import { useRoute } from '@react-navigation/native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const TodoScreen = () => {
-  const route = useRoute();
-  const userId = route.params?.userId; // Get userId from route parameters
-  console.log('User ID:', userId);
-
+const TodoScreen = ({navigation}) => {
   const [todos, setTodos] = useState([]); //this is flatlist state
   const [newTodo, setNewTodo] = useState('');//this is textinput state
-
+  const [userID, setUserId] = useState(null)
   useEffect(() => {
-    fetchTodos(); 
-  }, []);
+    const fetchUserId = async () => {
+      const storedUserId = await AsyncStorage.getItem('@userId')
+      console.log(storedUserId)
+      setUserId(storedUserId)
+
+      if (userID) {
+        fetchTodos()
+      }
+
+    }
+    fetchUserId()
+  }, [userID])
+
 
   const fetchTodos = async () => {
     try {
-      const response = await fetch(`https://todo-backend-ten-umber.vercel.app/api/todo/todos/${userId}`);
+      const response = await fetch(`https://todo-backend-ten-umber.vercel.app/api/todo/todos/${userID}`);
       const data = await response.json();
       console.log(data)
 
@@ -46,7 +53,7 @@ const TodoScreen = () => {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          userId: userId,
+          userId: userID,
           title: newTodo,
         }),
       });
@@ -87,9 +94,22 @@ const TodoScreen = () => {
     }
   };
 
+  const logout = async () => {
+    try{
+      await AsyncStorage.removeItem('@isLogIn')
+      navigation.replace('Login');
+    }
+    catch(e){
+      console.log(e)
+    }
+    
+  }
 
   return (
     <View style={styles.container}>
+      <TouchableOpacity onPress={logout}>
+        <Icon name="delete" size={24} color="green" style={styles.icon} />
+      </TouchableOpacity>
       <Text style={styles.heading}>To-Do List</Text>
 
       {/* Input and Add Task button in one row */}
@@ -104,7 +124,7 @@ const TodoScreen = () => {
       </View>
 
       {/* List of tasks */}
-      {todos.length===0 && (<Text style={{color:'grey',textAlign:'center'}}>add your Task</Text>)}
+      {todos.length === 0 && (<Text style={{ color: 'grey', textAlign: 'center' }}>add your Task</Text>)}
       <FlatList
         data={todos}
         renderItem={({ item }) => (
@@ -185,3 +205,4 @@ const styles = StyleSheet.create({
 });
 
 export default TodoScreen;
+
